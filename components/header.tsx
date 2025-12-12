@@ -20,7 +20,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg text-primary">
             <Heart className="w-6 h-6" />
-            <span>MindfulHub</span>
+            <span>MindfulLane</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

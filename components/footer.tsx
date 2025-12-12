@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-semibold text-foreground mb-2">MindfulHub</h3>
+            <h3 className="font-semibold text-foreground mb-2">MindfulLane</h3>
             <p className="text-muted-foreground text-sm">
               Your personal wellness companion for mood tracking, journaling, and mental health support.
             </p>
