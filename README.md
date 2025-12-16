@@ -1,5 +1,5 @@
 # 🌿 Mindful — Mental Wellness Web App  
-A modern, responsive mental wellness application built using **Next.js 14**, **TypeScript**, **Recharts**, and **styled UI components**.  
+A modern, responsive mental wellness application built using **Next.js 14**, **TypeScript**, **Recharts**, and **Tailwind CSS**.  
 Mindful helps users track their mood, write daily journal entries, and visualize emotional patterns with clean charts and insights.
 
 ---
