@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Smile, Frown, AlertCircle, Meh, Wind } from "lucide-react";
+import { addMood, getMoods } from "@/services/moodService";
 
 const moodOptions = [
   { id: "happy", label: "Happy", icon: Smile, color: "#FFD700" },
@@ -24,15 +25,13 @@ const moodOptions = [
   { id: "sad", label: "Sad", icon: Frown, color: "#4169E1" },
 ];
 
-const moodData = [
-  { day: "Mon", happy: 2, calm: 3, neutral: 1, anxious: 1, sad: 0 },
-  { day: "Tue", happy: 3, calm: 2, neutral: 1, anxious: 0, sad: 1 },
-  { day: "Wed", happy: 2, calm: 4, neutral: 1, anxious: 1, sad: 0 },
-  { day: "Thu", happy: 4, calm: 3, neutral: 0, anxious: 1, sad: 0 },
-  { day: "Fri", happy: 3, calm: 3, neutral: 1, anxious: 0, sad: 1 },
-  { day: "Sat", happy: 5, calm: 2, neutral: 0, anxious: 0, sad: 0 },
-  { day: "Sun", happy: 4, calm: 4, neutral: 1, anxious: 0, sad: 0 },
-];
+const moodMap: Record<string, string> = {
+  happy: "Happy",
+  calm: "Relaxed",
+  neutral: "Relaxed",
+  anxious: "Stressed",
+  sad: "Sad",
+};
 
 const affirmations = [
   "You are stronger than you think.",
@@ -43,37 +42,115 @@ const affirmations = [
   "You are growing every day.",
 ];
 
+interface Mood {
+  _id: string;
+  moodType: "Happy" | "Sad" | "Stressed" | "Relaxed";
+  note?: string;
+  date: string;
+  userId: string;
+}
+
+
 export default function MoodTracker() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [reflection, setReflection] = useState("");
-  const [affirmation, setAffirmation] = useState<string>("");
+  const [affirmation, setAffirmation] = useState("");
+  const [moods, setMoods] = useState<Mood[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  // Load Affirmation 
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
 
-    const rafId = requestAnimationFrame(() => {
-      const pick =
-        affirmations[Math.floor(Math.random() * affirmations.length)];
-      setAffirmation(pick);
-    });
-    return () => cancelAnimationFrame(rafId);
+    const pick =
+      affirmations[Math.floor(Math.random() * affirmations.length)];
+    setAffirmation(pick);
   }, []);
 
-  const handleLogMood = () => {
-    if (selectedMood && reflection) {
-      alert(`Mood "${selectedMood}" logged with reflection: "${reflection}"`);
+  // Fetch moods from backend
+  useEffect(() => {
+    const fetchMoods = async () => {
+      try {
+        const res = await getMoods();
+        setMoods(res.data);
+      } catch (err) {
+        console.error("Failed to fetch moods", err);
+      }
+    };
+
+    fetchMoods();
+  }, []);
+
+  // Save Mood
+  const handleLogMood = async () => {
+    if (!selectedMood) return;
+
+    try {
+      setLoading(true);
+
+      await addMood({
+        moodType: moodMap[selectedMood],
+        note: reflection,
+      });
+
+      const res = await getMoods();
+      setMoods(res.data);
+
       setSelectedMood(null);
       setReflection("");
+    } catch (err) {
+      console.error("Failed to log mood", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+
+  const getWeeklyMoodData = () => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    const base = days.map((day) => ({
+      day,
+      happy: 0,
+      calm: 0,
+      neutral: 0,
+      anxious: 0,
+      sad: 0,
+    }));
+
+    moods.forEach((mood) => {
+      const day = days[new Date(mood.date).getDay()];
+      const record = base.find((d) => d.day === day);
+      if (!record) return;
+
+      switch (mood.moodType) {
+        case "Happy":
+          record.happy += 1;
+          break;
+        case "Relaxed":
+          record.calm += 1;
+          break;
+        case "Stressed":
+          record.anxious += 1;
+          break;
+        case "Sad":
+          record.sad += 1;
+          break;
+        default:
+          record.neutral += 1;
+      }
+    });
+
+    return base;
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="grow py-12 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold mb-2">
             Mood Tracker
           </h1>
           <p className="text-muted-foreground mb-12 text-lg">
@@ -81,10 +158,10 @@ export default function MoodTracker() {
           </p>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Mood Input Section */}
+            {/* Mood Input */}
             <div className="lg:col-span-2 space-y-6">
               <CustomCard>
-                <h2 className="text-2xl font-semibold text-foreground mb-4">
+                <h2 className="text-2xl font-semibold mb-4">
                   How are you feeling today?
                 </h2>
 
@@ -99,24 +176,18 @@ export default function MoodTracker() {
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      <Icon className="w-6 h-6 md:w-8 md:h-8" style={{ color }} />
-                      <span className="text-sm font-medium text-foreground">
-                        {label}
-                      </span>
+                      <Icon className="w-7 h-7" style={{ color }} />
+                      <span className="text-sm font-medium">{label}</span>
                     </button>
                   ))}
                 </div>
 
                 <div className="space-y-2 mb-6">
-                  <label
-                    htmlFor="reflection"
-                    className="text-sm font-medium text-foreground"
-                  >
+                  <label className="text-sm font-medium">
                     Daily Reflection (Optional)
                   </label>
                   <CustomTextarea
-                    id="reflection"
-                    placeholder="Share what's on your mind... What triggered this mood? Any thoughts to process?"
+                    placeholder="What influenced your mood today?"
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
                     className="min-h-24"
@@ -125,32 +196,30 @@ export default function MoodTracker() {
 
                 <CustomButton
                   onClick={handleLogMood}
-                  disabled={!selectedMood}
+                  disabled={!selectedMood || loading}
                   className="w-full"
                 >
-                  Log Mood
+                  {loading ? "Saving..." : "Log Mood"}
                 </CustomButton>
               </CustomCard>
 
-              {/* Today's Affirmation */}
-              <CustomCard className="bg-gradient-to-br from-accent/10 to-primary/10 border-accent/50">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-2">
+              {/*Affirmation*/}
+              <CustomCard className="bg-gradient-to-br from-accent/10 to-primary/10">
+                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">
                   TODAY&apos;S AFFIRMATION
                 </h3>
-                <p className="text-lg md:text-xl font-medium text-foreground italic">
-                  {affirmation}
-                </p>
+                <p className="text-lg italic">{affirmation}</p>
               </CustomCard>
             </div>
 
-            {/* Weekly Chart */}
+            {/* Chart */}
             <CustomCard className="h-fit">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <h2 className="text-xl font-semibold mb-4">
                 Weekly Mood Trends
               </h2>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={moodData}>
+                  <BarChart data={getWeeklyMoodData()}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="day" />
                     <YAxis />
