@@ -111,7 +111,7 @@ function ChatPageContent() {
                 <div className="mb-8 text-center">
                   <div className="mb-4 text-5xl">💬</div>
                   <h2 className="mb-2 text-xl font-semibold text-gray-700">
-                    Start a conversation
+                    Start a conversation,{user ? ` ${user.name}` : ""}
                   </h2>
                   <p className="text-gray-500">
                     Share how you&apos;re feeling or ask for wellness tips
