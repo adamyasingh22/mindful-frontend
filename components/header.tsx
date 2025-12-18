@@ -9,6 +9,7 @@ import {
   Home,
   LogOut,
   User as UserIcon,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -36,6 +37,7 @@ export function Header() {
     { href: "/mood-tracker", label: "Mood Tracker", icon: Heart },
     { href: "/journal", label: "Journal", icon: BookOpen },
     { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+    { href: "/chat", label: "AI Chat", icon: MessageCircle },
   ];
 
   return (

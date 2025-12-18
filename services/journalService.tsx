@@ -1,8 +1,5 @@
 import api from "@/lib/api";
 
-/* -------------------- */
-/* Types */
-/* -------------------- */
 export interface CreateJournalPayload {
   title: string;
   content: string;
@@ -15,9 +12,6 @@ export interface UpdateJournalPayload {
   moodContext?: string;
 }
 
-/* -------------------- */
-/* API Calls */
-/* -------------------- */
 
 export const createJournal = (data: CreateJournalPayload) => {
   return api.post("/journals", data);
